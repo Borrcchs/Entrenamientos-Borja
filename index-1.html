@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b10">
+<title>Entrenamientos Borja</title>
+<style>
+:root{color-scheme:dark;--bg:#090b10;--panel:#121722;--panel2:#192130;--line:#293446;--txt:#f2f5fa;--muted:#9ba8ba;--accent:#a7f06b;--red:#ff7474}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px system-ui,-apple-system,Segoe UI,sans-serif;padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom));max-width:760px;margin-inline:auto}
+header{padding:22px 2px 14px;display:flex;justify-content:space-between;align-items:center}h1{font-size:22px;margin:0}h2{font-size:17px;margin:0 0 12px}.sub{color:var(--muted);font-size:12px;margin-top:4px}
+.pill{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:6px 9px;color:var(--accent)}
+nav{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 16px}nav button,.daybtn,.btn{border:1px solid var(--line);background:var(--panel);color:var(--txt);border-radius:11px;padding:11px 8px;font-weight:650}nav button.active,.daybtn.active{border-color:var(--accent);color:var(--accent);background:#182319}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px;margin:12px 0}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.daybtn{padding:9px 2px;font-size:12px}
+.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}.muted{color:var(--muted)}.tiny{font-size:12px}
+input,select{background:#0b1018;border:1px solid var(--line);border-radius:9px;color:var(--txt);padding:10px;min-width:0;width:100%;font:inherit}
+label{font-size:11px;color:var(--muted);display:block;margin:8px 0 4px}
+.btn{cursor:pointer}.primary{background:var(--accent);color:#10160c;border:0}.danger{color:var(--red)}.small{padding:7px 10px;font-size:12px}
+.exercise{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0}
+.exercise h3{font-size:15px;margin:0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.grid label{margin-top:9px}
+.sets{font-size:12px;color:var(--muted);margin-top:9px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--panel2);border-radius:11px;padding:12px}.stat strong{display:block;font-size:20px}.stat span{font-size:11px;color:var(--muted)}
+.historyitem{border-top:1px solid var(--line);padding:11px 0}.empty{color:var(--muted);text-align:center;padding:22px 5px}
+@media(max-width:390px){.grid{grid-template-columns:repeat(2,1fr)}h1{font-size:19px}}
+</style>
+</head>
+<body>
+<header><div><h1>ENTRENAMIENTOS</h1><div class="sub">Registro de cargas · Progresión · Historial</div></div><span class="pill">BORJA</span></header>
+<nav><button class="active" data-tab="train">Entrenar</button><button data-tab="history">Historial</button><button data-tab="stats">Progreso</button></nav>
+<section id="train">
+ <div class="card"><div class="row between"><h2>Semana</h2><span class="tiny muted">Domingo: descanso</span></div><div class="days" id="days"></div></div>
+ <div class="card"><div class="row between"><div><h2 id="dayTitle">Lunes</h2><div class="sub" id="dayFocus">Sesión editable</div></div><button class="btn small" id="renameFocus">Editar foco</button></div>
+ <div id="exerciseList"></div>
+ <button class="btn" id="addExercise" style="width:100%;margin-top:8px">＋ Añadir ejercicio</button>
+ <button class="btn primary" id="saveSession" style="width:100%;margin-top:9px">Guardar entrenamiento</button>
+ </div>
+</section>
+<section id="history" hidden><div class="card"><h2>Entrenamientos guardados</h2><div id="historyList"></div></div></section>
+<section id="stats" hidden><div class="card"><h2>Resumen</h2><div class="stats" id="statsBox"></div></div><div class="card"><h2>Datos y copias de seguridad</h2><div class="row"><button class="btn" id="export">Exportar copia</button><button class="btn" id="importBtn">Importar copia</button><input id="importFile" type="file" accept="application/json" hidden></div><p class="tiny muted">Los registros se guardan en este navegador y en este móvil. Exporta una copia periódicamente; borrar los datos del navegador puede eliminarlos.</p><button class="btn danger small" id="reset">Borrar todos los datos</button></div></section>
+<script>
+const DAYS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const starter=[
+ {focus:'Torso · fuerza',ex:[['Dominadas lastradas','Fuerza'],['Press banca','Fuerza'],['Remo con barra','Hipertrofia'],['Press militar','Hipertrofia'],['Curl bíceps','Hipertrofia']]},
+ {focus:'Pierna · fuerza',ex:[['Sentadilla','Fuerza'],['Peso muerto rumano','Hipertrofia'],['Prensa','Hipertrofia'],['Gemelos','Hipertrofia']]},
+ {focus:'Empuje · fondos',ex:[['Fondos lastrados','Fuerza'],['Press inclinado mancuernas','Hipertrofia'],['Elevaciones laterales','Hipertrofia'],['Extensión tríceps','Hipertrofia']]},
+ {focus:'Tirón · hipertrofia',ex:[['Dominadas estrictas','Hipertrofia'],['Jalón al pecho','Hipertrofia'],['Remo sentado','Hipertrofia'],['Pájaros','Hipertrofia'],['Curl martillo','Hipertrofia']]},
+ {focus:'Pierna · hipertrofia',ex:[['Prensa','Hipertrofia'],['Curl femoral','Hipertrofia'],['Extensión cuádriceps','Hipertrofia'],['Zancadas','Hipertrofia'],['Gemelos','Hipertrofia']]},
+ {focus:'Torso · complementario',ex:[['Press pecho máquina','Hipertrofia'],['Remo pecho apoyado','Hipertrofia'],['Fondos','Hipertrofia'],['Elevaciones laterales','Hipertrofia'],['Abdominales','Accesorio']]},
+ {focus:'Descanso',ex:[]}
+];
+const blank=()=>({days:starter.map(d=>({focus:d.focus,ex:d.ex.map(([name,type])=>({id:crypto.randomUUID(),name,type,sets:[]}))})),history:[]});
+let data;try{data=JSON.parse(localStorage.getItem('borja_training_v1'))||blank()}catch{data=blank()}
+let day=0,tab='train';
+function persist(){localStorage.setItem('borja_training_v1',JSON.stringify(data))}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderDays(){document.getElementById('days').innerHTML=DAYS.map((d,i)=>`<button class="daybtn ${i===day?'active':''}" data-day="${i}">${d.slice(0,3)}</button>`).join('');document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{day=+b.dataset.day;render()})}
+function render(){renderDays();let d=data.days[day];document.getElementById('dayTitle').textContent=DAYS[day];document.getElementById('dayFocus').textContent=d.focus;document.getElementById('exerciseList').innerHTML=d.ex.length?d.ex.map(e=>`<div class="exercise" data-id="${e.id}"><div class="row between"><h3>${esc(e.name)}</h3><button class="btn small danger del">Quitar</button></div><div class="sub">${esc(e.type)}</div><div class="grid"><div><label>Series</label><input class="nsets" type="number" min="1" max="20" value="3"></div><div><label>Reps</label><input class="reps" type="number" min="1" value="8"></div><div><label>Peso (kg)</label><input class="weight" type="number" min="0" step=".5" placeholder="0"></div><div><label>RIR</label><input class="rir" type="number" min="0" max="10" placeholder="2"></div></div><div class="row" style="margin-top:9px"><button class="btn small log">＋ Registrar serie</button><span class="tiny muted">${e.sets.length} series registradas</span></div><div class="sets">${e.sets.slice(-5).map(s=>`${s.reps} rep × ${s.weight} kg · RIR ${s.rir??'—'}`).join('<br>')}</div></div>`).join(''):'<div class="empty">Día de descanso</div>';
+document.querySelectorAll('.exercise').forEach(el=>{let id=el.dataset.id,e=d.ex.find(x=>x.id===id);el.querySelector('.del').onclick=()=>{d.ex=d.ex.filter(x=>x.id!==id);persist();render()};el.querySelector('.log').onclick=()=>{let reps=+el.querySelector('.reps').value,weight=+el.querySelector('.weight').value,rir=el.querySelector('.rir').value===''?null:+el.querySelector('.rir').value;if(!reps||el.querySelector('.weight').value===''){alert('Introduce repeticiones y peso.');return}e.sets.push({reps,weight,rir,date:new Date().toISOString()});persist();render()}})}
+document.getElementById('addExercise').onclick=()=>{let name=prompt('Nombre del ejercicio:');if(!name?.trim())return;let type=prompt('Tipo (Fuerza / Hipertrofia / Accesorio):','Hipertrofia')||'Hipertrofia';data.days[day].ex.push({id:crypto.randomUUID(),name:name.trim(),type,sets:[]});persist();render()};
+document.getElementById('renameFocus').onclick=()=>{let v=prompt('Nombre o foco de la sesión:',data.days[day].focus);if(v?.trim()){data.days[day].focus=v.trim();persist();render()}};
+document.getElementById('saveSession').onclick=()=>{let d=data.days[day],items=d.ex.filter(e=>e.sets.length).map(e=>({name:e.name,sets:e.sets.splice(0)}));if(!items.length){alert('Registra al menos una serie antes de guardar.');return}data.history.unshift({date:new Date().toISOString(),day:DAYS[day],focus:d.focus,items});persist();render();alert('Entrenamiento guardado en el historial.')};
+function showHistory(){let box=document.getElementById('historyList');box.innerHTML=data.history.length?data.history.map((h,i)=>`<div class="historyitem"><div class="row between"><strong>${esc(h.day)} · ${new Date(h.date).toLocaleDateString('es-ES')}</strong><button class="btn small danger" data-delhist="${i}">Eliminar</button></div><div class="tiny muted">${esc(h.focus)}</div>${h.items.map(x=>`<p class="tiny">${esc(x.name)}: ${x.sets.map(s=>`${s.reps}×${s.weight}kg`).join(' · ')}</p>`).join('')}</div>`).join(''):'<div class="empty">Todavía no hay entrenamientos guardados.</div>';document.querySelectorAll('[data-delhist]').forEach(b=>b.onclick=()=>{if(confirm('¿Eliminar este entrenamiento?')){data.history.splice(+b.dataset.delhist,1);persist();showHistory()}})}
+function showStats(){let sessions=data.history.length,sets=data.history.reduce((n,h)=>n+h.items.reduce((m,x)=>m+x.sets.length,0),0),best=data.history.flatMap(h=>h.items.flatMap(x=>x.sets)).reduce((m,s)=>Math.max(m,s.weight),0);document.getElementById('statsBox').innerHTML=`<div class="stat"><strong>${sessions}</strong><span>Sesiones</span></div><div class="stat"><strong>${sets}</strong><span>Series registradas</span></div><div class="stat"><strong>${best} kg</strong><span>Mayor carga anotada</span></div>`}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));['train','history','stats'].forEach(x=>document.getElementById(x).hidden=x!==tab);if(tab==='history')showHistory();if(tab==='stats')showStats()});
+document.getElementById('export').onclick=()=>{let a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.href=u;a.download='copia-entrenamientos-borja.json';a.click();URL.revokeObjectURL(u)};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=async e=>{try{let x=JSON.parse(await e.target.files[0].text());if(!x.days||!x.history)throw 0;if(confirm('Esto sustituirá los datos actuales. ¿Continuar?')){data=x;persist();render();alert('Copia importada.')}}catch{alert('Archivo de copia no válido.')}};
+document.getElementById('reset').onclick=()=>{if(confirm('¿Borrar todos los entrenamientos y volver al ejemplo inicial?')){data=blank();persist();render();showStats()}};
+render();
+</script>
+</body></html>
